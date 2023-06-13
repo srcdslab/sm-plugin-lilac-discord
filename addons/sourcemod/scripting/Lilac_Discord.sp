@@ -1,7 +1,7 @@
 #pragma semicolon 1
 
 // Try include since there is no include file for the forwards at the moment
-#tryinclude <lilac>
+#include <lilac>
 
 #define PLUGIN_NAME "Lilac_Discord"
 #define STEAM_API_CVAR "lilac_steam_api"
@@ -16,7 +16,7 @@ public Plugin myinfo =
 {
 	name 		= PLUGIN_NAME,
 	author 		= ".Rushaway, Dolly, koen",
-	version 	= "1.0",
+	version 	= "1.1",
 	description = "Send Lilac Detections notifications to discord",
 	url 		= "https://nide.gg"
 };
@@ -24,6 +24,7 @@ public Plugin myinfo =
 public void OnPluginStart() {
 	g_Lilac.enable 	= CreateConVar("lilac_discord_enable", "1", "Toggle lilac notification system", _, true, 0.0, true, 1.0);
 	g_Lilac.webhook = CreateConVar("lilac_discord", "", "The webhook URL of your Discord channel. (Lilac)", FCVAR_PROTECTED);
+	g_Lilac.redirect = CreateConVar("lilac_discord_redirect", "https://nide.gg/connect/", "URL to your redirect.php file");
 	
 	RelayHelper_PluginStart();
 
@@ -98,8 +99,9 @@ public void lilac_cheater_detected(int client, int cheat_type, char[] sLine)
 	
 	int port = FindConVar("hostport").IntValue;
 	
-	char connect[128];
-	FormatEx(connect, sizeof(connect), "**steam://connect/%s:%i**", ip, port);
+	char connect[128], sURL[256];
+	g_Lilac.redirect.GetString(sURL, sizeof(sURL));
+	FormatEx(connect, sizeof(connect), "[%s:%d](%s?ip=%s&port=%d)", ip, port, sURL, ip, port);
 
 	/* Send Embed message */
 	SendLilacDiscordMessage(client, sSuspicion, cDetails, sCheat, sLine, connect, buffer);
