@@ -17,6 +17,20 @@ project:
       - source: /scripting/include
         dest: /addons/sourcemod/scripting/include
 
+    - name: AutoRecorder
+      type: git
+      repo: https://github.com/srcdslab/sm-plugin-AutoRecorder
+      unpack:
+      - source: /addons
+        dest: /addons
+
+    - name: Extended-Discord
+      type: git
+      repo: https://github.com/srcdslab/sm-plugin-Extended-Discord
+      unpack:
+      - source: /addons/sourcemod/scripting/include
+        dest: /addons/sourcemod/scripting/include
+
     - name: DiscordWebhookAPI
       type: git
       repo: https://github.com/srcdslab/sm-plugin-DiscordWebhookAPI
