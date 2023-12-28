@@ -25,7 +25,7 @@ public Plugin myinfo =
 {
 	name 		= PLUGIN_NAME,
 	author 		= ".Rushaway, Dolly, koen",
-	version 	= "1.1",
+	version 	= "1.1.1",
 	description = "Send Lilac Detections notifications to discord",
 	url 		= "https://github.com/srcdslab/sm-plugin-lilac-discord"
 };
@@ -85,7 +85,7 @@ public void lilac_cheater_detected(int client, int cheat_type, char[] sLine)
 	char buffer[PLATFORM_MAX_PATH];
 	g_cvWebhook.GetString(buffer, sizeof(buffer));
 	if (buffer[0] == '\0') {
-        LogError("[%s] Invalid or no webhook specified in cfg/sourcemod/%s.cfg", PLUGIN_NAME);
+        LogError("[%s] Invalid or no webhook specified.", PLUGIN_NAME);
         return;
     }
 
