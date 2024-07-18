@@ -30,7 +30,8 @@ public Plugin myinfo =
 	url 		= "https://github.com/srcdslab/sm-plugin-lilac-discord"
 };
 
-public void OnPluginStart() {
+public void OnPluginStart()
+{
 	/* General config */
 	g_cvEnable 	= CreateConVar("lilac_discord_enable", "1", "Toggle lilac notification system", _, true, 0.0, true, 1.0);
 	g_cvWebhook = CreateConVar("lilac_discord_webhook", "", "The webhook URL of your Discord channel.", FCVAR_PROTECTED);
@@ -74,8 +75,9 @@ public void OnMapInit(const char[] mapName)
 	FormatEx(g_sMap, sizeof(g_sMap), mapName);
 }
 
-public void lilac_cheater_detected(int client, int cheat_type, char[] sLine)
+public void lilac_cheater_detected(int client, int cheat_type)
 {
+	LogMessage("[%s] Detected a cheater on client %L with cheat %d", PLUGIN_NAME, client, cheat_type);
 	/* Plugin Enabled ? */
 	if(!g_cvEnable.BoolValue) {
 		return;
@@ -84,7 +86,8 @@ public void lilac_cheater_detected(int client, int cheat_type, char[] sLine)
 	/* Webhook is set ? */
 	char buffer[PLATFORM_MAX_PATH];
 	g_cvWebhook.GetString(buffer, sizeof(buffer));
-	if (buffer[0] == '\0') {
+	if (buffer[0] == '\0')
+	{
         LogError("[%s] Invalid or no webhook specified.", PLUGIN_NAME);
         return;
     }
@@ -110,7 +113,7 @@ public void lilac_cheater_detected(int client, int cheat_type, char[] sLine)
 	#endif
 
 	//----------------------------------------------------------------------------------------------------
-	/* Generate all content we will need*/
+	// Generate all content we will need
 	//----------------------------------------------------------------------------------------------------
 
 	// Name + Formated Text
@@ -128,32 +131,38 @@ public void lilac_cheater_detected(int client, int cheat_type, char[] sLine)
 
 	// Cheat Name
 	char sCheat[64];
-	GetCheatName(view_as<CHEATS>(cheat_type), sCheat, sizeof(sCheat));
+	GetCheatName(cheat_type, sCheat, sizeof(sCheat));
+
+	// Cheat Details
+	char sCheatDetails[512];
+	lilac_GetDetectedInfos(client, sCheatDetails, sizeof(sCheatDetails));
 
 	// Quick Connect
 	char ip[20];
 	ConVar publicAddr = FindConVar("net_public_adr");
-	if(publicAddr != null) {
-		publicAddr.GetString(ip, sizeof(ip));
-	}
-	
+	if(publicAddr == null)
+		publicAddr = FindConVar("hostip");
+
+	publicAddr.GetString(ip, sizeof(ip));
 	delete publicAddr;
-	
+
 	int port = FindConVar("hostport").IntValue;
-	
+
 	char connect[128 + 256], sURL[256];
 	g_cvRedirectURL.GetString(sURL, sizeof(sURL));
 	FormatEx(connect, sizeof(connect), "[%s:%d](%s?ip=%s&port=%d)", ip, port, sURL, ip, port);
 
+	LogMessage("%L - %s - %s - %s - %s - %s - %s", client, sSuspicion, cDetails, sCheat, sCheatDetails, sDemo, connect);
+
 	/* Send Embed message */
-	SendLilacDiscordMessage(client, sSuspicion, cDetails, sCheat, sLine, sDemo, connect, buffer);
+	SendLilacDiscordMessage(client, sSuspicion, cDetails, sCheat, sCheatDetails, sDemo, connect, buffer);
 }
 
-stock void SendLilacDiscordMessage(int client, char[] sHeader, char[] sDetails, char[] sCheat, char[] sLine, char[] sDemo, char[] sConnect, char[] sWebhookURL) {
 //----------------------------------------------------------------------------------------------------
-/* Generate the Webhook */
+// Generate the Webhook
 //----------------------------------------------------------------------------------------------------
-
+stock void SendLilacDiscordMessage(int client, char[] sHeader, char[] sDetails, char[] sCheat, char[] sCheatDetails, char[] sDemo, char[] sConnect, char[] sWebhookURL)
+{
 	bool IsThread = g_cvChannelType.BoolValue;
 	char sThreadID[32], sThreadName[WEBHOOK_THREAD_NAME_MAX_SIZE];
 	g_cvThreadID.GetString(sThreadID, sizeof sThreadID);
@@ -161,13 +170,18 @@ stock void SendLilacDiscordMessage(int client, char[] sHeader, char[] sDetails, 
 
 	Webhook webhook = new Webhook("");
 
-	if (IsThread) {
-		if (!sThreadName[0] && !sThreadID[0]) {
+	if (IsThread)
+	{
+		if (!sThreadName[0] && !sThreadID[0])
+		{
 			LogError("[%s] Thread Name or ThreadID not found or specified.", PLUGIN_NAME);
 			delete webhook;
 			return;
-		} else {
-			if (strlen(sThreadName) > 0) {
+		}
+		else
+		{
+			if (strlen(sThreadName) > 0)
+			{
 				webhook.SetThreadName(sThreadName);
 				sThreadID[0] = '\0';
 			}
@@ -194,7 +208,7 @@ stock void SendLilacDiscordMessage(int client, char[] sHeader, char[] sDetails, 
 	EmbedField Field_2 = new EmbedField("Reason", sCheat, true);
 	Embed_1.AddField(Field_2);
 
-	EmbedField Infos = new EmbedField("Details", sLine, false);
+	EmbedField Infos = new EmbedField("Details", sCheatDetails, false);
 	Embed_1.AddField(Infos);
 
 	EmbedField Map = new EmbedField("Map", g_sMap, false);
@@ -230,7 +244,7 @@ stock void SendLilacDiscordMessage(int client, char[] sHeader, char[] sDetails, 
 	pack.WriteString(sHeader);
 	pack.WriteString(sDetails);
 	pack.WriteString(sCheat);
-	pack.WriteString(sLine);
+	pack.WriteString(sCheatDetails);
 	pack.WriteString(sDemo);
 	pack.WriteString(sConnect);
 	pack.WriteString(sWebhookURL);
@@ -241,7 +255,7 @@ stock void SendLilacDiscordMessage(int client, char[] sHeader, char[] sDetails, 
 
 public void OnWebHookExecuted(HTTPResponse response, DataPack pack)
 {
-	char sHeader[192 + MAX_NAME_LENGTH], sDetails[328], sCheat[64], sLine[512], sDemo[256], sConnect[384], sWebhookURL[WEBHOOK_URL_MAX_SIZE];
+	char sHeader[192 + MAX_NAME_LENGTH], sDetails[328], sCheat[64], sCheatDetails[512], sDemo[256], sConnect[384], sWebhookURL[WEBHOOK_URL_MAX_SIZE];
 	static int retries = 0;
 	pack.Reset();
 
@@ -251,7 +265,7 @@ public void OnWebHookExecuted(HTTPResponse response, DataPack pack)
 	pack.ReadString(sHeader, sizeof(sHeader));
 	pack.ReadString(sDetails, sizeof(sDetails));
 	pack.ReadString(sCheat, sizeof(sCheat));
-	pack.ReadString(sLine, sizeof(sLine));
+	pack.ReadString(sCheatDetails, sizeof(sCheatDetails));
 	pack.ReadString(sDemo, sizeof(sDemo));
 	pack.ReadString(sConnect, sizeof(sConnect));
 	pack.ReadString(sWebhookURL, sizeof(sWebhookURL));
@@ -260,12 +274,15 @@ public void OnWebHookExecuted(HTTPResponse response, DataPack pack)
 	
 	if ((!IsThreadReply && response.Status != HTTPStatus_OK) || (IsThreadReply && response.Status != HTTPStatus_NoContent))
 	{
-		if (retries < g_cvWebhookRetry.IntValue) {
+		if (retries < g_cvWebhookRetry.IntValue)
+		{
 			PrintToServer("[%s] Failed to send the webhook. Resending it .. (%d/%d)", PLUGIN_NAME, retries, g_cvWebhookRetry.IntValue);
-			SendLilacDiscordMessage(client, sHeader, sDetails, sCheat, sLine, sDemo, sConnect, sWebhookURL);
+			SendLilacDiscordMessage(client, sHeader, sDetails, sCheat, sCheatDetails, sDemo, sConnect, sWebhookURL);
 			retries++;
 			return;
-		} else {
+		}
+		else
+		{
 			if (!g_Plugin_ExtDiscord)
 				LogError("[%s] Failed to send the webhook after %d retries, aborting.", PLUGIN_NAME, retries);
 		#if defined _extendeddiscord_included
