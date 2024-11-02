@@ -25,7 +25,7 @@ public Plugin myinfo =
 {
 	name 		= PLUGIN_NAME,
 	author 		= ".Rushaway, Dolly, koen",
-	version 	= "1.1.1",
+	version 	= "1.1.3",
 	description = "Send Lilac Detections notifications to discord",
 	url 		= "https://github.com/srcdslab/sm-plugin-lilac-discord"
 };
@@ -122,12 +122,11 @@ public void lilac_cheater_detected(int client, int cheat_type)
 	FormatEx(sSuspicion, sizeof(sSuspicion), "Suspicion of cheating for `%s`", sName);
 
 	// Client details
-	char clientAuth[64], cIP[24], cDetails[240];
-	GetClientIP(client, cIP, sizeof(cIP));
-	if(!GetClientAuthId(client, AuthId_Steam2, clientAuth, sizeof(clientAuth)), false)
+	char clientAuth[64], cDetails[240];
+	if(!GetClientAuthId(client, AuthId_Steam3, clientAuth, sizeof(clientAuth)), false)
 		strcopy(clientAuth, sizeof(clientAuth), "No SteamID");
 		
-	FormatEx(cDetails, sizeof(cDetails), "%s \nIP: %s", clientAuth, cIP);
+	FormatEx(cDetails, sizeof(cDetails), "%s", clientAuth);
 
 	// Cheat Name
 	char sCheat[64];
