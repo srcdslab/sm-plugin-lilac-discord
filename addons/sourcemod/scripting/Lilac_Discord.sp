@@ -25,7 +25,7 @@ public Plugin myinfo =
 {
 	name 		= PLUGIN_NAME,
 	author 		= ".Rushaway, Dolly, koen",
-	version 	= "1.1.3",
+	version 	= "1.1.4",
 	description = "Send Lilac Detections notifications to discord",
 	url 		= "https://github.com/srcdslab/sm-plugin-lilac-discord"
 };
@@ -92,8 +92,8 @@ public void lilac_cheater_detected(int client, int cheat_type)
         return;
     }
 
-	#if defined _autorecorder_included
 	char sDemo[256];
+	#if defined _autorecorder_included
 	if (g_Plugin_AutoRecorder)
 	{
 		char sDate[32];
