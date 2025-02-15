@@ -14,8 +14,8 @@ project:
       type: git
       repo: https://github.com/srcdslab/sm-plugin-lilac
       unpack:
-      - source: /scripting/include
-        dest: /addons/sourcemod/scripting/include
+      - source: /addons
+        dest: /addons
 
     - name: AutoRecorder
       type: git
