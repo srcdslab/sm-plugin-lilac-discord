@@ -25,7 +25,7 @@ public Plugin myinfo =
 {
 	name 		= PLUGIN_NAME,
 	author 		= ".Rushaway, Dolly, koen",
-	version 	= "1.1.4",
+	version 	= "1.1.5",
 	description = "Send Lilac Detections notifications to discord",
 	url 		= "https://github.com/srcdslab/sm-plugin-lilac-discord"
 };
@@ -58,7 +58,7 @@ public void OnLibraryAdded(const char[] sName)
 {
 	if (strcmp(sName, "ExtendedDiscord", false) == 0)
 		g_Plugin_ExtDiscord = true;
-	if (strcmp(sName, "AutoRecorder", false) == 0)
+	else if (strcmp(sName, "AutoRecorder", false) == 0)
 		g_Plugin_AutoRecorder = true;
 }
 
@@ -66,7 +66,7 @@ public void OnLibraryRemoved(const char[] sName)
 {
 	if (strcmp(sName, "ExtendedDiscord", false) == 0)
 		g_Plugin_ExtDiscord = false;
-	if (strcmp(sName, "AutoRecorder", false) == 0)
+	else if (strcmp(sName, "AutoRecorder", false) == 0)
 		g_Plugin_AutoRecorder = false;
 }
 
