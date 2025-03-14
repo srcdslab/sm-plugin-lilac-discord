@@ -10,8 +10,6 @@
 #define REQUIRE_PLUGIN
 
 #define PLUGIN_NAME "Lilac_Discord"
-#define WEBHOOK_URL_MAX_SIZE			1000
-#define WEBHOOK_THREAD_NAME_MAX_SIZE	100
 
 ConVar g_cvEnable, g_cvWebhook, g_cvWebhookRetry, g_cvAvatar, g_cvUsername, g_cvRedirectURL = null;
 ConVar g_cvChannelType, g_cvThreadName, g_cvThreadID;
@@ -25,7 +23,7 @@ public Plugin myinfo =
 {
 	name 		= PLUGIN_NAME,
 	author 		= ".Rushaway, Dolly, koen",
-	version 	= "1.1.5",
+	version 	= "1.1.6",
 	description = "Send Lilac Detections notifications to discord",
 	url 		= "https://github.com/srcdslab/sm-plugin-lilac-discord"
 };
