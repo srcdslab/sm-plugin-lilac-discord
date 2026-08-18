@@ -7,13 +7,13 @@ This repository contains a SourceMod plugin that sends Little Anti-Cheat (Lilac)
 
 ## Technical Environment
 - **Language**: SourcePawn
-- **Platform**: SourceMod 1.11.0+ (as specified in sourceknight.yaml)
-- **Build System**: SourceKnight 0.2
-- **Compiler**: SourcePawn compiler (spcomp) via SourceKnight
+- **Platform**: SourceMod 1.12.x
+- **Build System**: Native GitHub Actions (rumblefrog/setup-sp)
+- **Compiler**: SourcePawn compiler (spcomp)
 - **CI/CD**: GitHub Actions with automated building, tagging, and releases
 
 ## Dependencies
-The plugin requires several external dependencies managed by SourceKnight:
+The plugin requires several external dependencies, cloned and copied into place by the CI workflow (`.github/workflows/ci.yml`):
 - **SourceMod**: Core SourceMod framework (1.11.0-git6934)
 - **Lilac**: Little Anti-Cheat plugin (required for cheat detection events)
 - **DiscordWebhookAPI**: Discord webhook functionality (required)
@@ -48,8 +48,7 @@ Follow these specific conventions for this project:
 ```
 addons/sourcemod/scripting/
 ├── Lilac_Discord.sp          # Main plugin file
-sourceknight.yaml             # Build configuration
-.github/workflows/ci.yml      # CI/CD pipeline
+.github/workflows/ci.yml      # CI/CD pipeline (build, dependencies, tag, release)
 .github/copilot-instructions.md # This file
 ```
 
@@ -65,12 +64,14 @@ sourceknight.yaml             # Build configuration
 
 ### Building the Plugin
 ```bash
-# SourceKnight automatically handles dependencies and compilation
-# Build is triggered via GitHub Actions or SourceKnight CLI
+# Build runs automatically via GitHub Actions (.github/workflows/ci.yml):
+# 1. Sets up spcomp via rumblefrog/setup-sp (SourceMod 1.12.x)
+# 2. Clones dependencies (lilac, AutoRecorder, Extended-Discord, DiscordWebhookAPI)
+# 3. Compiles addons/sourcemod/scripting/Lilac_Discord.sp with spcomp
 ```
 
 ### Testing Changes
-1. **Syntax Validation**: SourceKnight will catch compilation errors
+1. **Syntax Validation**: The GitHub Actions build will catch compilation errors
 2. **Runtime Testing**: Deploy to test server with Lilac anti-cheat active
 3. **Discord Testing**: Verify webhook delivery to Discord channels/threads
 4. **Integration Testing**: Test with optional plugins enabled/disabled
@@ -106,7 +107,7 @@ Test with various ConVar configurations:
 If you encounter undefined function errors (like `GetCheatName`):
 1. Check if the function should be provided by Lilac includes
 2. Verify all required include files are properly referenced
-3. Check SourceKnight dependency configuration for missing plugins
+3. Check the CI workflow's dependency clone steps for missing plugins
 4. Consider implementing the function as a stock function if it's a utility
 
 ## Performance Considerations
