@@ -12,7 +12,7 @@
 #define PLUGIN_NAME "Lilac_Discord"
 
 ConVar g_cvEnable, g_cvWebhook, g_cvWebhookRetry, g_cvAvatar, g_cvUsername, g_cvRedirectURL = null;
-ConVar g_cvChannelType, g_cvThreadName, g_cvThreadID;
+ConVar g_cvThreadName, g_cvThreadID;
 
 bool g_Plugin_ExtDiscord = false;
 bool g_Plugin_AutoRecorder = false;
@@ -23,7 +23,7 @@ public Plugin myinfo =
 {
 	name 		= PLUGIN_NAME,
 	author 		= ".Rushaway, Dolly, koen",
-	version 	= "1.1.6",
+	version 	= "1.2.0",
 	description = "Send Lilac Detections notifications to discord",
 	url 		= "https://github.com/srcdslab/sm-plugin-lilac-discord"
 };
@@ -37,7 +37,6 @@ public void OnPluginStart()
 	g_cvAvatar = CreateConVar("lilac_discord_avatar", "https://avatars.githubusercontent.com/u/110772618?s=200&v=4", "URL to Avatar image.");
 	g_cvUsername = CreateConVar("lilac_discord_username", "Little Anti-Cheat Notification", "Discord username.");
 	g_cvRedirectURL = CreateConVar("lilac_discord_redirect", "https://nide.gg/connect/", "URL to your redirect.php file.");
-	g_cvChannelType = CreateConVar("lilac_discord_channel_type", "0", "Type of your channel: (1 = Thread, 0 = Classic Text channel");
 
 	/* Thread config */
 	g_cvThreadName = CreateConVar("lilac_discord_threadname", "Lilac - New suspicion", "The Thread Name of your Discord forums. (If not empty, will create a new thread)", FCVAR_PROTECTED);
@@ -160,30 +159,11 @@ public void lilac_cheater_detected(int client, int cheat_type)
 //----------------------------------------------------------------------------------------------------
 stock void SendLilacDiscordMessage(int client, char[] sHeader, char[] sDetails, char[] sCheat, char[] sCheatDetails, char[] sDemo, char[] sConnect, char[] sWebhookURL)
 {
-	bool IsThread = g_cvChannelType.BoolValue;
 	char sThreadID[32], sThreadName[WEBHOOK_THREAD_NAME_MAX_SIZE];
 	g_cvThreadID.GetString(sThreadID, sizeof sThreadID);
 	g_cvThreadName.GetString(sThreadName, sizeof sThreadName);
 
 	Webhook webhook = new Webhook("");
-
-	if (IsThread)
-	{
-		if (!sThreadName[0] && !sThreadID[0])
-		{
-			LogError("[%s] Thread Name or ThreadID not found or specified.", PLUGIN_NAME);
-			delete webhook;
-			return;
-		}
-		else
-		{
-			if (strlen(sThreadName) > 0)
-			{
-				webhook.SetThreadName(sThreadName);
-				sThreadID[0] = '\0';
-			}
-		}
-	}
 
 	/* Webhook UserName */
 	char sName[128];
@@ -197,6 +177,8 @@ stock void SendLilacDiscordMessage(int client, char[] sHeader, char[] sDetails, 
 		webhook.SetUsername(sName);
 	if (strlen(sAvatar) > 0)
 		webhook.SetAvatarURL(sAvatar);
+	if (strlen(sThreadName) > 0)
+		webhook.SetThreadName(sThreadName);
 
 	Embed Embed_1 = new Embed(sHeader, sDetails);
 	Embed_1.SetTimeStampNow();
@@ -232,11 +214,6 @@ stock void SendLilacDiscordMessage(int client, char[] sHeader, char[] sDetails, 
 
 	DataPack pack = new DataPack();
 
-	if (IsThread && strlen(sThreadName) <= 0 && strlen(sThreadID) > 0)
-		pack.WriteCell(1);
-	else
-		pack.WriteCell(0);
-
 	pack.WriteCell(GetClientUserId(client));
 	pack.WriteString(sHeader);
 	pack.WriteString(sDetails);
@@ -256,7 +233,6 @@ public void OnWebHookExecuted(HTTPResponse response, DataPack pack)
 	static int retries = 0;
 	pack.Reset();
 
-	bool IsThreadReply = pack.ReadCell();
 	int userid = pack.ReadCell();
 	int client = GetClientOfUserId(userid);
 	pack.ReadString(sHeader, sizeof(sHeader));
@@ -273,7 +249,7 @@ public void OnWebHookExecuted(HTTPResponse response, DataPack pack)
 	{
 		if (retries < g_cvWebhookRetry.IntValue)
 		{
-			PrintToServer("[%s] Failed to send the webhook. Resending it .. (%d/%d)", PLUGIN_NAME, retries, g_cvWebhookRetry.IntValue);
+			PrintToServer("[%s] Failed to send the webhook (HTTP %d). Resending it .. (%d/%d)", PLUGIN_NAME, view_as<int>(response.Status), retries, g_cvWebhookRetry.IntValue);
 			SendLilacDiscordMessage(client, sHeader, sDetails, sCheat, sCheatDetails, sDemo, sConnect, sWebhookURL);
 			retries++;
 			return;
@@ -281,10 +257,10 @@ public void OnWebHookExecuted(HTTPResponse response, DataPack pack)
 		else
 		{
 			if (!g_Plugin_ExtDiscord)
-				LogError("[%s] Failed to send the webhook after %d retries, aborting.", PLUGIN_NAME, retries);
+				LogError("[%s] Failed to send the webhook after %d retries (last HTTP status: %d), aborting.", PLUGIN_NAME, retries, view_as<int>(response.Status));
 		#if defined _extendeddiscord_included
 			else
-				ExtendedDiscord_LogError("[%s] Failed to send the webhook after %d retries, aborting.", PLUGIN_NAME, retries);
+				ExtendedDiscord_LogError("[%s] Failed to send the webhook after %d retries (last HTTP status: %d), aborting.", PLUGIN_NAME, retries, view_as<int>(response.Status));
 		#endif
 		}
 	}
