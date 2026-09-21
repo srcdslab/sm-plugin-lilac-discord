@@ -23,7 +23,7 @@ public Plugin myinfo =
 {
 	name 		= PLUGIN_NAME,
 	author 		= ".Rushaway, Dolly, koen",
-	version 	= "1.2.0",
+	version 	= "1.2.1",
 	description = "Send Lilac Detections notifications to discord",
 	url 		= "https://github.com/srcdslab/sm-plugin-lilac-discord"
 };
@@ -120,7 +120,7 @@ public void lilac_cheater_detected(int client, int cheat_type)
 
 	// Client details
 	char clientAuth[64], cDetails[240];
-	if(!GetClientAuthId(client, AuthId_Steam3, clientAuth, sizeof(clientAuth)), false)
+	if(!GetClientAuthId(client, AuthId_Steam3, clientAuth, sizeof(clientAuth), false))
 		strcopy(clientAuth, sizeof(clientAuth), "No SteamID");
 		
 	FormatEx(cDetails, sizeof(cDetails), "%s", clientAuth);
@@ -157,7 +157,7 @@ public void lilac_cheater_detected(int client, int cheat_type)
 //----------------------------------------------------------------------------------------------------
 // Generate the Webhook
 //----------------------------------------------------------------------------------------------------
-stock void SendLilacDiscordMessage(int client, char[] sHeader, char[] sDetails, char[] sCheat, char[] sCheatDetails, char[] sDemo, char[] sConnect, char[] sWebhookURL)
+stock void SendLilacDiscordMessage(int client, char[] sHeader, char[] sDetails, char[] sCheat, char[] sCheatDetails, char[] sDemo, char[] sConnect, char[] sWebhookURL, int retries = 0)
 {
 	char sThreadID[32], sThreadName[WEBHOOK_THREAD_NAME_MAX_SIZE];
 	g_cvThreadID.GetString(sThreadID, sizeof sThreadID);
@@ -222,6 +222,7 @@ stock void SendLilacDiscordMessage(int client, char[] sHeader, char[] sDetails, 
 	pack.WriteString(sDemo);
 	pack.WriteString(sConnect);
 	pack.WriteString(sWebhookURL);
+	pack.WriteCell(retries);
 
 	webhook.Execute(sWebhookURL, OnWebHookExecuted, pack, sThreadID);
 	delete webhook;
@@ -230,7 +231,6 @@ stock void SendLilacDiscordMessage(int client, char[] sHeader, char[] sDetails, 
 public void OnWebHookExecuted(HTTPResponse response, DataPack pack)
 {
 	char sHeader[192 + MAX_NAME_LENGTH], sDetails[328], sCheat[64], sCheatDetails[512], sDemo[256], sConnect[384], sWebhookURL[WEBHOOK_URL_MAX_SIZE];
-	static int retries = 0;
 	pack.Reset();
 
 	int userid = pack.ReadCell();
@@ -242,16 +242,16 @@ public void OnWebHookExecuted(HTTPResponse response, DataPack pack)
 	pack.ReadString(sDemo, sizeof(sDemo));
 	pack.ReadString(sConnect, sizeof(sConnect));
 	pack.ReadString(sWebhookURL, sizeof(sWebhookURL));
+	int retries = pack.ReadCell();
 
 	delete pack;
-	
+
 	if (response.Status != HTTPStatus_OK && response.Status != HTTPStatus_NoContent)
 	{
 		if (retries < g_cvWebhookRetry.IntValue)
 		{
 			PrintToServer("[%s] Failed to send the webhook (HTTP %d). Resending it .. (%d/%d)", PLUGIN_NAME, view_as<int>(response.Status), retries, g_cvWebhookRetry.IntValue);
-			SendLilacDiscordMessage(client, sHeader, sDetails, sCheat, sCheatDetails, sDemo, sConnect, sWebhookURL);
-			retries++;
+			SendLilacDiscordMessage(client, sHeader, sDetails, sCheat, sCheatDetails, sDemo, sConnect, sWebhookURL, retries + 1);
 			return;
 		}
 		else
@@ -264,6 +264,4 @@ public void OnWebHookExecuted(HTTPResponse response, DataPack pack)
 		#endif
 		}
 	}
-
-	retries = 0;
 }
