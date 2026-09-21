@@ -23,7 +23,7 @@ public Plugin myinfo =
 {
 	name 		= PLUGIN_NAME,
 	author 		= ".Rushaway, Dolly, koen",
-	version 	= "1.2.0",
+	version 	= "1.2.1",
 	description = "Send Lilac Detections notifications to discord",
 	url 		= "https://github.com/srcdslab/sm-plugin-lilac-discord"
 };
